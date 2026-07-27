@@ -60,7 +60,7 @@
     var c = A.cls, y = A.yongshen;
     document.getElementById('clsBox').innerHTML =
       '<span class="stage-tag">日主' + c.stage + '</span><span class="geju-tag">' + c.geju + '</span>' +
-      (c.nearNeutral ? '<span class="geju-tag" style="background:#2f6fbf">接近中和</span>' : '') +
+      (c.nearNeutral ? '<span class="geju-tag" style="background:#1a237e">接近中和</span>' : '') +
       '<p>日主' + D.GAN[A.dayGan] + D.WUXING[c.dayWX] + '，旺衰得分 <b>' + c.dayScore.toFixed(1) + '</b>。</p>' +
       '<p><span class="yong">用神：' + y.yong.map(function (w) { return D.WUXING[w]; }).join('、') + '</span>　' +
       '<span class="ji">忌神：' + y.ji.map(function (w) { return D.WUXING[w]; }).join('、') + '</span></p>' +
@@ -100,7 +100,7 @@
         var w = D.GAN_WX[y2.g];
         var t = y.yong.indexOf(w) >= 0 ? '喜' : (y.ji.indexOf(w) >= 0 ? '忌' : '平');
         return '<td class="' + (t === '喜' ? 'yong' : (t === '忌' ? 'ji' : '')) + '" style="' +
-          (t === '喜' ? 'color:#2e7d32' : (t === '忌' ? 'color:#b03a2e' : 'color:#888')) + '">' + t + '</td>';
+          (t === '喜' ? 'color:#00838f' : (t === '忌' ? 'color:#c62828' : 'color:#8d6e63')) + '">' + t + '</td>';
       }).join('') + '</tr>'];
     document.getElementById('tblDayun').innerHTML = dyRows.join('');
 

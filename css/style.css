@@ -2,8 +2,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: "Microsoft YaHei", "PingFang SC", serif;
-  background: #f5f0e6;
-  color: #2c2c2c;
+  background: #ede0c0;
+  color: #3e2723;
   line-height: 1.7;
 }
 header {
@@ -16,13 +16,22 @@ header h1 { font-size: 26px; letter-spacing: 4px; }
 header .sub { font-size: 12px; opacity: .85; margin-top: 8px; }
 
 .input-card, .card {
-  background: #fffdf8;
-  border: 1px solid #e0d5bd;
+  background: #faf3e0;
+  border: 1px solid #d4c29a;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(120, 90, 40, .08);
+  box-shadow: 0 2px 8px rgba(120, 90, 40, .12);
   margin: 16px auto;
   max-width: 860px;
   padding: 18px 22px;
+}
+
+/* 圆盘卡片占满全屏宽度 */
+.card:has(#diskBox) {
+  max-width: 100%;
+  margin: 16px 0;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
 }
 .row { margin: 10px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .row > label:first-child { width: 76px; font-weight: bold; color: #7a1f1f; }
@@ -42,7 +51,14 @@ input[type=number] {
   border-radius: 6px; padding: 8px 12px; font-size: 13px; margin-top: 6px;
 }
 
-main { max-width: 900px; margin: 0 auto; padding-bottom: 30px; }
+main { max-width: 100%; margin: 0 auto; padding-bottom: 30px; }
+
+/* 非圆盘卡片保持居中限制宽度 */
+main .card:not(:has(#diskBox)), .input-card {
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+}
 .card h2 {
   font-size: 17px; color: #7a1f1f; border-left: 4px solid #a03c2a;
   padding-left: 10px; margin-bottom: 12px;
@@ -51,21 +67,21 @@ main { max-width: 900px; margin: 0 auto; padding-bottom: 30px; }
 /* 四柱表 */
 table { width: 100%; border-collapse: collapse; text-align: center; }
 .sizhu th, .sizhu td { border: 1px solid #e0d5bd; padding: 7px 4px; }
-.sizhu thead th { background: #f2e8d5; font-size: 14px; }
+.sizhu thead th { background: #ede0c0; font-size: 14px; }
 .sizhu .gz { font-size: 26px; font-weight: bold; }
-.sizhu .shen { font-size: 12px; color: #666; }
-.sizhu .cang { font-size: 12px; color: #555; }
-.wx-0 { color: #3aa655; } .wx-1 { color: #d43a2f; } .wx-2 { color: #b8860b; }
-.wx-3 { color: #c9a227; } .wx-4 { color: #2f6fbf; }
+.sizhu .shen { font-size: 12px; color: #6d4c41; }
+.sizhu .cang { font-size: 12px; color: #5d4037; }
+.wx-0 { color: #00838f; } .wx-1 { color: #c62828; } .wx-2 { color: #f57f17; }
+.wx-3 { color: #546e7a; } .wx-4 { color: #212121; }
 .taiyuan { margin-top: 10px; font-size: 14px; color: #555; }
 
 /* 圆盘 */
-#diskBox { max-width: 640px; margin: 0 auto; }
+#diskBox { max-width: 100%; margin: 0 auto; }
 
 /* 分值条 */
 .bar-row { display: flex; align-items: center; margin: 7px 0; gap: 8px; }
 .bar-row .name { width: 88px; font-size: 14px; text-align: right; }
-.bar-track { flex: 1; background: #eee5d3; border-radius: 4px; height: 20px; position: relative; overflow: hidden; }
+.bar-track { flex: 1; background: #e6d5b0; border-radius: 4px; height: 20px; position: relative; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 4px; transition: width .5s; }
 .bar-val { width: 130px; font-size: 13px; }
 .detail { font-size: 13px; color: #666; margin-top: 8px; }
@@ -76,18 +92,18 @@ table { width: 100%; border-collapse: collapse; text-align: center; }
   padding: 3px 14px; font-size: 15px; margin-right: 8px;
 }
 #clsBox .geju-tag {
-  display: inline-block; background: #c9a227; color: #fff; border-radius: 4px;
+  display: inline-block; background: #00838f; color: #fff; border-radius: 4px;
   padding: 3px 12px; font-size: 14px; margin-bottom: 8px;
 }
 #clsBox p { margin: 8px 0; font-size: 14px; }
-#clsBox .yong { color: #2e7d32; font-weight: bold; }
-#clsBox .ji { color: #b03a2e; font-weight: bold; }
+#clsBox .yong { color: #00838f; font-weight: bold; }
+#clsBox .ji { color: #c62828; font-weight: bold; }
 
 /* 标签列表 */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .taglist { list-style: none; }
 .taglist li {
-  display: inline-block; background: #f2e8d5; border: 1px solid #d9c9a3;
+  display: inline-block; background: #ede0c0; border: 1px solid #d4c29a;
   border-radius: 14px; padding: 3px 12px; margin: 4px 5px 4px 0; font-size: 13px;
 }
 .taglist li.chong { background: #fdecea; border-color: #e0a49e; color: #a03028; }
@@ -97,10 +113,10 @@ table { width: 100%; border-collapse: collapse; text-align: center; }
 .taglist li.empty { background: none; border: none; color: #999; }
 
 /* 大运表 */
-.dayun th, .dayun td { border: 1px solid #e0d5bd; padding: 6px 3px; font-size: 13px; }
+.dayun th, .dayun td { border: 1px solid #d4c29a; padding: 6px 3px; font-size: 13px; }
 .dayun .gz { font-size: 19px; font-weight: bold; }
-.dayun tr.fit-yong { background: #e9f5ea; }
-.dayun tr.fit-ji { background: #fdecea; }
+.dayun tr.fit-yong { background: #e0f7fa; }
+.dayun tr.fit-ji { background: #ffebee; }
 
 /* 短文 */
 .report p { margin: 12px 0; text-indent: 2em; font-size: 15px; text-align: justify; }
