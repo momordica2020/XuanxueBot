@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>四柱预测 · 自动排盘系统</title>
+<title>八字角色卡生成器</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header>
-  <h1>四柱预测 · 自动排盘系统</h1>
-  <p class="sub">依据《四柱预测入门》算法实现 · 历法按北京时间（UTC+8），节气为天文算法推算 · 仅供参考研习</p>
+  <h1>八字角色卡生成器</h1>
+  <p class="sub">依据《四柱预测入门》算法 · 输入公历生日生成虚拟角色设定 · 仅供创作参考</p>
 </header>
 
 <section class="input-card">
@@ -27,87 +27,41 @@
   </div>
   <div class="row">
     <label>性别</label>
-    <label class="radio"><input type="radio" name="gender" value="male" checked> 男（乾造）</label>
-    <label class="radio"><input type="radio" name="gender" value="female"> 女（坤造）</label>
-    <button id="btnCalc">排 盘</button>
+    <label class="radio"><input type="radio" name="gender" value="male" checked> 男</label>
+    <label class="radio"><input type="radio" name="gender" value="female"> 女</label>
+    <button id="btnCalc">生成角色卡</button>
   </div>
   <div id="edgeWarn" class="edge-warn" style="display:none"></div>
 </section>
 
 <main id="result" style="display:none">
-  <!-- 四柱表 -->
+  <!-- 基础排盘 -->
   <section class="card">
-    <h2>四柱排盘</h2>
+    <h2>八字排盘</h2>
     <table class="sizhu" id="tblSizhu"></table>
     <div class="taiyuan" id="divTaiyuan"></div>
   </section>
 
   <!-- 圆盘 -->
   <section class="card">
-    <h2>八环生克圆盘 <span class="hint">（点击任一字查看其生克关系，再次点击取消）</span></h2>
+    <h2>五行圆盘 <span class="hint">（点击任一字查看生克关系，再次点击取消）</span></h2>
     <div id="diskBox"></div>
   </section>
 
-  <!-- 旺衰打分 -->
-  <section class="card">
-    <h2>五行旺衰打分</h2>
-    <div id="scoreBars"></div>
-    <div id="scoreDetail" class="detail"></div>
-  </section>
-
-  <!-- 命格定性 -->
-  <section class="card">
-    <h2>命格定性与用神</h2>
-    <div id="clsBox"></div>
-  </section>
-
-  <!-- 关系与神煞 -->
-  <section class="card two-col">
-    <div>
-      <h2>刑冲合害</h2>
-      <ul id="relList" class="taglist"></ul>
-    </div>
-    <div>
-      <h2>神煞</h2>
-      <ul id="shaList" class="taglist"></ul>
-    </div>
-  </section>
-
-  <!-- 大运 -->
-  <section class="card">
-    <h2>大运</h2>
-    <div id="dayunInfo" class="detail"></div>
-    <table class="dayun" id="tblDayun"></table>
-  </section>
-
-  <!-- 短文 -->
-  <section class="card">
-    <h2>命格简述</h2>
-    <div id="reportBox" class="report"></div>
-  </section>
-
-  <!-- 家境 -->
-  <section class="card">
-    <h2>家境推断</h2>
-    <div id="famBox" class="fam-box"></div>
-  </section>
-
-  <!-- 流年编年史 -->
-  <section class="card">
-    <h2>流年编年史（1~80虚岁）</h2>
-    <p class="detail">仅列出有事件发生的年份</p>
-    <div id="lnBox" class="ln-box"></div>
+  <!-- 角色卡 -->
+  <section class="card chara-card">
+    <h2>角色设定卡</h2>
+    <div id="charaBox"></div>
   </section>
 </main>
 
 <footer>
-  <p>算法实现：节气天文算法（Meeus）→ 四柱干支 → 打分法旺衰（李洪成）→ 七档定性 → 取用神 → 十神心性短文 · 测试基准见 test/tests.js</p>
+  <p>算法：节气天文算法（Meeus）→ 四柱干支 → 打分法旺衰 → 取用神 → 角色卡生成 · 仅供创作研习，不构成人生指导</p>
 </footer>
 
 <script src="js/data.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/engine.js"></script>
-<script src="js/report.js"></script>
 <script src="js/disk.js"></script>
 <script src="js/app.js"></script>
 </body>

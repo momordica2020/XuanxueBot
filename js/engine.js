@@ -683,11 +683,466 @@
     return years;
   }
 
+  /* ============ 角色卡生成 ============ */
+  // 基于命理知识规则，生成完整的虚拟角色设定
+  function charaCard(A, chart, gender, birthYear) {
+    var P = A.pillars, dg = A.dayGan, dw = D.GAN_WX[dg], ys = A.yongshen, dy = A.dayun;
+    var isMale = gender === 'male';
+    var ln = liuNian(A, chart, 80, gender);
+    var fw = familyWealth(A);
+
+    var SHENGXIAO = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+
+    /* 十神性格大白话 */
+    var shenMood = {
+      '正官': '循规蹈矩、有责任心、重名誉，做事按部就班',
+      '七杀': '刚毅果断、好胜心强、有魄力但脾气急',
+      '正印': '心地善良、包容力强、乐于付出，但依赖心也较强',
+      '偏印': '思维独特、才华出众，但性格内向多疑、不善表达',
+      '比肩': '独立自主、自尊心强、好竞争',
+      '劫财': '热情仗义、固执冲动，花钱容易大手大脚',
+      '食神': '温和厚道、有艺术天赋、知足常乐',
+      '伤官': '聪明机敏、口才出众，但傲气不服输',
+      '正财': '勤俭踏实、守本分、重视物质保障',
+      '偏财': '慷慨大方、善交际、灵活多变'
+    };
+    /* 旺衰→性格大白话 */
+    var stageMood = {
+      '偏旺': '性格强势，精力充沛，做事有魄力',
+      '太旺': '性格极度刚强，容易走极端',
+      '旺极': '性格偏执，不易接受他人意见',
+      '中和': '性格平和稳重，进退有度，适应性较强',
+      '偏弱': '性格偏柔和内敛，做事谨慎',
+      '太弱': '性格优柔寡断，缺乏主见',
+      '弱极': '性格随和，容易随波逐流'
+    };
+    /* 日主五行→性格底色 */
+    var wxMood = ['正直向上，有进取心', '热情外向，急躁冲动', '诚实厚道，保守稳重', '刚毅果断，重义气', '聪明灵活，善变多谋'];
+
+    /* ---------- 1. 基本信息 ---------- */
+    var shengxiao = SHENGXIAO[chart.year.z];
+    var stageText = stageMood[A.cls.stage] || '性格平和';
+    var basicDesc = stageText + '，本质上' + wxMood[dw] + '。';
+    var basicNote = '日主' + D.GAN[dg] + D.WUXING[dw] + '，旺衰：' + A.cls.stage + '，格局：' + A.cls.geju;
+
+    /* ---------- 2. 外貌体型 ---------- */
+    var bodyTypes = [
+      { build: '瘦长挺拔', face: '长脸，眉目清秀', height: '偏高', skin: '偏白或偏青' },
+      { build: '上尖下阔，肩宽背厚', face: '上尖下圆，面色红润', height: '中等偏高', skin: '红润' },
+      { build: '敦实厚重，肩宽背厚', face: '方圆脸，鼻大口方', height: '偏矮或中等', skin: '偏黄' },
+      { build: '方正结实，骨感强', face: '方脸，棱角分明', height: '中等', skin: '白皙' },
+      { build: '圆胖丰腴，肩宽背厚', face: '圆脸，面皮较黑', height: '偏矮或中等', skin: '偏黑' }
+    ];
+    var buildDesc = bodyTypes[dw].build;
+    if (A.cls.stage.indexOf('旺') >= 0) buildDesc += '，体型饱满';
+    else if (A.cls.stage.indexOf('弱') >= 0) buildDesc += '，体型偏瘦';
+    var appearNote = '日主属' + D.WUXING[dw] + '，旺衰' + A.cls.stage;
+
+    /* ---------- 3. 性格 ---------- */
+    var maxScore = 0, maxWX = dw;
+    for (var w = 0; w < 5; w++) { if (A.scores[w] > maxScore) { maxScore = A.scores[w]; maxWX = w; } }
+    var mainShenName = shiShen(dg, maxWX * 2).name;
+    var persoDesc = '骨子里' + wxMood[dw] + '。' + stageText + '。身上最突出的性格特质是：' + shenMood[mainShenName] + '。';
+    var persoNote = '日主' + D.WUXING[dw] + '，最旺十神：' + mainShenName + '，旺衰：' + A.cls.stage;
+
+    /* ---------- 4. 事业职业 ---------- */
+    var industryByWX = [
+      '文化教育、木材家具、园艺种植、医药卫生、出版传媒',
+      '电子电器、能源化工、餐饮娱乐、互联网、美容化妆',
+      '房地产建筑、农业矿业、陶瓷水泥、仓储物流、中介服务',
+      '五金机械、金融证券、汽车交通、军警司法、医疗器械',
+      '水产养殖、水利运输、旅游贸易、物流、咨询策划'
+    ];
+    var industryBadByWX = [
+      '过度的文化教育或木材相关行业',
+      '过度的电子能源或餐饮娱乐行业',
+      '过度的房地产或农业相关行业',
+      '过度的金融机械或军警行业',
+      '过度的水产水利或旅游贸易行业'
+    ];
+    var yongWX = ys.yong[0];
+    var jiWX = ys.ji[0];
+    var careerDesc = '适合从事' + industryByWX[yongWX] + '等方面的工作。在' + industryBadByWX[jiWX] + '方面容易遇到阻碍，不宜过多投入。';
+    var careerNote = '用神属' + D.WUXING[yongWX] + '，忌神属' + D.WUXING[jiWX];
+
+    /* ---------- 5. 配偶情况 ---------- */
+    var caiWX = D.WX_KE[dw];
+    var guanWX = -1;
+    for (var wwx = 0; wwx < 5; wwx++) { if (D.WX_KE[wwx] === dw) { guanWX = wwx; break; } }
+    var spouseWX = isMale ? caiWX : guanWX;
+
+    // 伴侣外貌
+    var dayZ = P[2].z;
+    var prettyZhi = [0, 3, 6, 9];
+    var midZhi = [2, 5, 8, 11];
+    var spouseLooksLv = '';
+    if (prettyZhi.indexOf(dayZ) >= 0) spouseLooksLv = '漂亮端庄，有能力';
+    else if (midZhi.indexOf(dayZ) >= 0) spouseLooksLv = '相貌一般，热情聪明，好说';
+    else spouseLooksLv = '朴素敦厚，相貌较一般';
+    var wxLooks = ['身材高挑，发秀端庄', '亮丽面红润', '敦厚结实，个矮较丑', '白皙端庄', '微胖圆活，面黑机灵，相貌一般'];
+    var spouseLooksDesc = '伴侣' + spouseLooksLv + '，' + wxLooks[spouseWX] + '。';
+    var spouseLooksNote = '日支' + D.ZHI[dayZ] + '，配偶星属' + D.WUXING[spouseWX];
+
+    // 伴侣距离
+    var pillarIdx = -1;
+    if (isMale) {
+      for (var spi = 0; spi < 4; spi++) {
+        if (D.GAN_WX[P[spi].g] === caiWX || D.ZHI_WX[P[spi].z] === caiWX) { pillarIdx = spi; break; }
+      }
+    } else {
+      for (var spj = 0; spj < 4; spj++) {
+        if (D.GAN_WX[P[spj].g] === guanWX || D.ZHI_WX[P[spj].z] === guanWX) { pillarIdx = spj; break; }
+      }
+    }
+    var spouseDistDesc = '';
+    if (pillarIdx === 2) spouseDistDesc = '伴侣多半是同乡、同学或同事，距离很近';
+    else if (pillarIdx === 1 || pillarIdx === 3) spouseDistDesc = '伴侣多半在同镇或同区域，距离中等';
+    else if (pillarIdx === 0) spouseDistDesc = '伴侣多半来自远方、外镇外县，距离较远';
+    else spouseDistDesc = '伴侣出现的位置不固定，缘分来的方向不确定';
+    var spouseDistNote = pillarIdx >= 0 ? '配偶星在' + ['年柱','月柱','日柱','时柱'][pillarIdx] : '配偶星不显';
+
+    // 年龄差距
+    var yinWX2 = [4, 0, 1, 2, 3][dw];
+    var guanYinScore = A.scores[guanWX] + A.scores[yinWX2];
+    var shiCaiScore = A.scores[D.WX_SHENG[dw]] + A.scores[caiWX];
+    var ageGapDesc = '';
+    if (guanYinScore > shiCaiScore * 1.5) ageGapDesc = '伴侣年龄比自己大，差距较大（3岁以上）';
+    else if (guanYinScore > shiCaiScore * 1.1) ageGapDesc = '伴侣年龄略大或相仿（1-3岁）';
+    else if (shiCaiScore > guanYinScore * 1.5) ageGapDesc = '伴侣年龄比自己小，差距较大（3岁以上）';
+    else if (shiCaiScore > guanYinScore * 1.1) ageGapDesc = '伴侣年龄略小或相仿（1-3岁）';
+    else ageGapDesc = '伴侣年龄与自己相仿';
+
+    // 夫妻感情
+    var dayGanWX = dw, dayZhiWX = D.ZHI_WX[dayZ];
+    var dayRelationDesc = '';
+    if (dayGanWX === dayZhiWX) dayRelationDesc = '双方性格相近，互不相让';
+    else if (D.WX_SHENG[dayGanWX] === dayZhiWX) dayRelationDesc = '自己对伴侣付出较多，主动照顾对方';
+    else if (D.WX_SHENG[dayZhiWX] === dayGanWX) dayRelationDesc = '伴侣对自己付出较多，对方更主动';
+    else if (D.WX_KE[dayGanWX] === dayZhiWX) dayRelationDesc = '自己在家里比较强势，管着对方';
+    else dayRelationDesc = '伴侣比较强势，在家里说一不二';
+    var spouseIsYong = ys.yong.indexOf(spouseWX) >= 0;
+    var marriageDesc = '两人相处模式：' + dayRelationDesc + '。';
+    marriageDesc += spouseIsYong ? '两人性格比较合拍，感情基础较好。' : '两人性格不太合拍，容易产生矛盾摩擦。';
+    var dayHe = false;
+    A.relations.forEach(function (r) {
+      if (r.type === '六合' && (r.a === 2 || r.b === 2)) dayHe = true;
+    });
+    if (dayHe) marriageDesc += '伴侣可能有外遇或私情，需留意感情危机。';
+    var dayChong = false;
+    A.relations.forEach(function (r) {
+      if (r.type === '六冲' && (r.a === 2 || r.b === 2)) dayChong = true;
+    });
+    if (dayChong) marriageDesc += '婚姻关系不太稳定，可能面临分居或离异的风险。';
+    var spouseNote = '配偶星' + (spouseIsYong ? '为喜用' : '为忌神');
+    if (dayHe) spouseNote += '，日支逢合';
+    if (dayChong) spouseNote += '，日支逢冲';
+
+    /* ---------- 6. 身世背景 ---------- */
+    var parentsRelationDesc = '';
+    var yearMonthChong = false;
+    A.relations.forEach(function (r) {
+      if (r.type === '六冲' || r.type === '天干冲') {
+        if ((r.a === 0 && r.b === 1) || (r.a === 1 && r.b === 0)) yearMonthChong = true;
+      }
+    });
+    if (yearMonthChong) parentsRelationDesc = '父母经常争吵，感情不太和睦，甚至可能分居或离异';
+    else if (D.GAN_WX[P[0].g] === D.GAN_WX[P[1].g]) parentsRelationDesc = '父母关系平淡但稳定，很少大吵大闹';
+    else parentsRelationDesc = '父母感情尚可，家庭关系比较平稳';
+
+    // 家境大白话
+    var wealthDesc = '';
+    if (fw.level === '富裕') wealthDesc = '家境优渥，出身富足之家，祖业殷实';
+    else if (fw.level === '小康偏上') wealthDesc = '家境中等偏上，父母勤恳持家，衣食无忧';
+    else if (fw.level === '书香门第') wealthDesc = '出身书香门第，虽未必大富但重视教育，有文化底蕴';
+    else if (fw.level === '小康') wealthDesc = '家境平稳小康，父母有一定能力，虽非大富亦无冻馁之虞';
+    else if (fw.level === '起伏不定') wealthDesc = '家境变动较大，早年可能多次搬迁，家道有起落';
+    else if (fw.level === '财多压身') wealthDesc = '家境表面可能富裕但内部压力大，长辈劳碌';
+    else wealthDesc = '家境平凡，父母为普通人家，需靠自身努力白手起家';
+
+    // 父亲健康
+    var fatherWX = D.GAN_WX[P[0].g];
+    var keFatherWX = -1;
+    for (var kf = 0; kf < 5; kf++) { if (D.WX_KE[kf] === fatherWX) { keFatherWX = kf; break; } }
+    var fatherHealthDesc = '';
+    if (A.scores[keFatherWX] > 150) fatherHealthDesc = '父亲身体偏弱，易有肝胆或筋骨方面的疾病';
+    else fatherHealthDesc = '父亲身体尚可';
+    // 母亲健康
+    var yinWX3 = [4, 0, 1, 2, 3][dw];
+    var keYinWX = -1;
+    for (var km = 0; km < 5; km++) { if (D.WX_KE[km] === yinWX3) { keYinWX = km; break; } }
+    var motherHealthDesc = '';
+    if (A.scores[keYinWX] > 150) motherHealthDesc = '母亲身体偏弱，易有脾胃或消化方面的疾病';
+    else motherHealthDesc = '母亲身体尚可';
+    var familyNote = '年月' + (yearMonthChong ? '相冲' : '无冲') + '，家境判定：' + fw.level;
+
+    /* ---------- 7. 子女情况 ---------- */
+    var childWX = isMale ? guanWX : D.WX_SHENG[dw];
+    var childCount = 0;
+    var childScore = A.scores[childWX];
+    if (childScore > 200) childCount = 3;
+    else if (childScore > 150) childCount = 2;
+    else if (childScore > 80) childCount = 1;
+    else childCount = 0;
+    var childDesc = '';
+    if (childCount === 0) childDesc = '子女缘分较薄，可能没有孩子或孩子很少';
+    else childDesc = '预计可能有' + childCount + '个孩子';
+    var hourZhi = P[3].z;
+    var hourCangGan0 = D.CANG_GAN[hourZhi][0][0];
+    var hourShenName = shiShen(dg, hourCangGan0).name;
+    var hourShenDesc = '';
+    if (hourShenName === '正官' || hourShenName === '七杀') hourShenDesc = '孩子将来比较有出息，有主见';
+    else if (hourShenName === '正印' || hourShenName === '偏印') hourShenDesc = '孩子比较内向，但读书不错';
+    else if (hourShenName === '食神' || hourShenName === '伤官') hourShenDesc = '孩子聪明活泼，有才艺';
+    else if (hourShenName === '正财' || hourShenName === '偏财') hourShenDesc = '孩子将来经济条件不错';
+    else hourShenDesc = '孩子性格独立，有主见';
+    childDesc += '。' + hourShenDesc + '。';
+    var childNote = '子女星属' + D.WUXING[childWX] + '，得分' + childScore.toFixed(1) + '，时柱' + D.GAN[P[3].g] + D.ZHI[hourZhi];
+
+    /* ---------- 8. 寿命健康 ---------- */
+    var dangerYears = [];
+    ln.forEach(function (yr) {
+      var hasDanger = yr.predictions.some(function (p) { return p.cat === '凶' || p.cat === '灾'; });
+      if (hasDanger && yr.age > 40) dangerYears.push(yr.age + '岁（' + (birthYear + yr.age - 1) + '年）');
+    });
+    var lifespanDesc = '需要特别注意的年份：' + (dangerYears.length ? dangerYears.slice(0, 5).join('、') : '暂无明显风险年份') + '。';
+    lifespanDesc += '（寿命长短的精确推断方法尚缺，以上仅为风险年份提示）';
+    var minWX = 0, minScore = 999;
+    for (var mw = 0; mw < 5; mw++) { if (A.scores[mw] < minScore) { minScore = A.scores[mw]; minWX = mw; } }
+    var wxBody = ['肝胆、筋骨、四肢', '心脏、小肠、血脉', '脾胃、消化、肌肉', '肺、大肠、呼吸系统', '肾、膀胱、生殖泌尿系统'];
+    var healthDesc = wxBody[minWX] + '方面需要多加注意，容易出问题。';
+    var healthNote = '最弱五行：' + D.WUXING[minWX] + '（' + minScore.toFixed(1) + '）';
+
+    /* ---------- 9. 人生阶段划分 ---------- */
+    var stages = [];
+    var startAge = Math.floor(dy.years);
+    var stageNames = ['少年求学', '青年探索', '青年奋斗', '中年事业', '中年收获', '晚年时期'];
+
+    // 辅助：推断极端年份事件（纯大白话，不含命理术语）
+    function extremeYearEvents(ageFrom, ageTo) {
+      var events = [];
+      for (var li = 0; li < ln.length; li++) {
+        var yr = ln[li];
+        if (yr.age < ageFrom || yr.age >= ageTo) continue;
+        var yearAD = birthYear + yr.age - 1;
+        var sentence = '';
+        var extremeType = '';
+
+        var evTypes = yr.events.map(function (e) { return e.type; });
+        var yp = yearAD + '年（' + yr.age + '岁时）';
+
+        for (var pi = 0; pi < yr.predictions.length; pi++) {
+          var pred = yr.predictions[pi];
+          var cat = pred.cat;
+
+          if ((cat === '凶' || cat === '灾' || cat === '牢') && yr.fit === '忌') {
+            extremeType = 'bad';
+            var hasPunish = evTypes.indexOf('xing') >= 0;
+            var hasHarm = evTypes.indexOf('hai') >= 0;
+            var hasHeavy = evTypes.indexOf('ganChong') >= 0 || evTypes.indexOf('zhiChong') >= 0;
+            if (cat === '灾' && hasHeavy) {
+              sentence = yp + '运势很差，尤其是农历五月或十一月前后，交通安全需格外注意，容易遭遇车祸、外伤或手术，建议避免长途驾驶';
+            } else if (cat === '灾' && hasPunish) {
+              sentence = yp + '运势很差，尤其是农历三月或九月前后，容易涉及纠纷或法律问题，需谨言慎行、避免与人争执';
+            } else if (cat === '灾' && hasHarm) {
+              sentence = yp + '运势很差，尤其是农历六月或十二月前后，健康方面需要注意，易有小病小灾，特别是肝胆或心血管方面';
+            } else {
+              sentence = yp + '运势很差，各方面都不顺，工作压力大，财运也差，宜守不宜进';
+            }
+            break;
+          }
+          if ((cat === '吉' || cat === '贵') && yr.fit === '喜') {
+            extremeType = 'good';
+            if (cat === '贵') {
+              sentence = yp + '运势很好，尤其是农历二月或八月前后，会遇到贵人相助，可能是领导、长辈或有能力的朋友，能帮你解决难题';
+            } else {
+              sentence = yp + '运势很好，工作顺利、财运亨通、家庭和睦，做什么都比较顺心';
+            }
+            break;
+          }
+          if ((cat === '婚') && yr.age >= 18 && yr.age <= 40 && yr.fit !== '忌') {
+            extremeType = 'romance';
+            var romanticPlaces = ['工作场所', '学校或培训班', '朋友聚会', '社交或应酬场合', '出差或旅途中', '身边的圈子'];
+            var placeIdx = (yearAD + yr.age) % romanticPlaces.length;
+            var wxLooks2 = ['身材高挑、气质佳', '活泼开朗、热情外向', '敦厚可靠、踏实稳重', '理性干练、相貌出众', '聪明灵动、温柔可人'];
+            var spouseWX2 = isMale ? caiWX : guanWX;
+            sentence = yp + '感情方面会有重要变化，尤其是农历四月或十月前后，可能在' + romanticPlaces[placeIdx] + '遇到心动的人，对方多半是' + wxLooks2[spouseWX2] + '，感情进展较快';
+            break;
+          }
+          if ((cat === '婚') && yr.age >= 22 && yr.fit === '忌') {
+            extremeType = 'marriage_bad';
+            sentence = yp + '感情方面容易出问题，关系可能出现裂痕，容易因为小事争吵，需多沟通多包容';
+            break;
+          }
+          if ((cat === '业') && yr.fit === '喜' && yr.age >= 22 && yr.age <= 60) {
+            extremeType = 'career';
+            sentence = yp + '事业上有重要突破，尤其是农历正月或七月前后，可能升职加薪、获得重要项目，或开辟新的事业方向';
+            break;
+          }
+          if ((cat === '财') && yr.fit === '喜' && yr.age >= 18) {
+            extremeType = 'wealth';
+            sentence = yp + '财运不错，有额外收入或投资获利的机会，但也需注意不要冲动消费';
+            break;
+          }
+          if ((cat === '财') && yr.fit === '忌' && yr.age >= 18) {
+            extremeType = 'wealth_bad';
+            sentence = yp + '容易破财，花钱的地方多，投资容易失利，不宜做大额决策';
+            break;
+          }
+          if ((cat === '学') && yr.fit === '喜' && yr.age >= 6 && yr.age <= 30) {
+            extremeType = 'study';
+            sentence = yp + '学业表现突出，考试顺利，能取得好成绩，有机会获得表彰或重要资格';
+            break;
+          }
+        }
+        if (sentence) {
+          events.push({ age: yr.age, yearAD: yearAD, type: extremeType, sentence: sentence });
+        }
+      }
+      events.sort(function (a, b) { return a.age - b.age; });
+      return events;
+    }
+
+    // 幼年
+    stages.push({
+      from: 1, to: startAge,
+      title: '幼年时期',
+      desc: '出生至' + startAge + '岁，' + wealthDesc + '。此阶段身体发育受家庭环境影响较大。',
+      note: '起运前，家境：' + fw.level
+    });
+
+    for (var si = 0; si < Math.min(6, dy.list.length); si++) {
+      var step = dy.list[si];
+      var stepW = D.GAN_WX[step.g];
+      var stepIsYong = ys.yong.indexOf(stepW) >= 0;
+      var stepIsJi = ys.ji.indexOf(stepW) >= 0;
+      var stepShen = shiShen(dg, step.g).name;
+      var ageFrom = Math.floor(step.ageStart);
+      var ageTo = Math.floor(step.ageEnd);
+      var yearFrom = birthYear + ageFrom - 1;
+      var yearTo = birthYear + ageTo - 1;
+      var stepDesc = ageFrom + '岁至' + ageTo + '岁（约' + yearFrom + '至' + yearTo + '年），';
+      var stepNote = D.GAN[step.g] + D.ZHI[step.z] + '运，' + stepShen + '，' + (stepIsYong ? '喜用' : (stepIsJi ? '忌神' : '平'));
+
+      if (si === 0 || si === 1) {
+        if (stepIsYong && (stepShen === '正印' || stepShen === '偏印')) {
+          stepDesc += '学习能力强，读书顺利，有长辈帮衬，升学有望。';
+        } else if (stepIsJi && (stepShen === '正印' || stepShen === '偏印')) {
+          stepDesc += '学业压力较大，读书比较吃力，家庭经济可能有一定困难。';
+        } else if (stepShen === '比肩' || stepShen === '劫财') {
+          stepDesc += '交友广泛，人缘好，但容易因朋友破财或遭遇竞争。';
+        } else if (stepIsYong) {
+          stepDesc += '整体比较顺利，学业和生活没有大的波折。';
+        } else {
+          stepDesc += '这段时间多有挫折，需要忍耐和积累，不宜冒进。';
+        }
+      } else if (si === 2 || si === 3) {
+        if (stepShen === '正财' || stepShen === '偏财') {
+          stepDesc += '有赚钱的机会出现，适合创业或投资';
+          if (stepIsYong) stepDesc += '，财来得比较稳，能存得住。';
+          else stepDesc += '，但钱来得快去得也快，需注意理财。';
+        } else if ((stepShen === '正官' || stepShen === '七杀') && stepIsYong) {
+          stepDesc += '事业上升期，有望升职掌权，有贵人提携，工作顺利。';
+        } else if ((stepShen === '正官' || stepShen === '七杀') && stepIsJi) {
+          stepDesc += '工作压力比较大，容易遇到是非纠纷，需要谨慎行事，避免口舌。';
+        } else if (stepShen === '正印' || stepShen === '偏印') {
+          if (stepIsYong) stepDesc += '适合学习深造或考证，有长辈贵人相助。';
+          else stepDesc += '想法多但难落地，容易陷入空想，事业进展缓慢。';
+        } else if (stepShen === '食神' || stepShen === '伤官') {
+          stepDesc += '才华发挥期，适合从事创意、技术类工作，但注意别太傲气得罪人。';
+        } else if (stepShen === '比肩' || stepShen === '劫财') {
+          stepDesc += '竞争激烈，容易破财，但人脉广，可合伙做事。';
+        } else if (stepIsYong) {
+          stepDesc += '事业稳步上升，家庭和事业都比较顺。';
+        } else {
+          stepDesc += '事业多遇阻碍，感情可能有变动或跳槽之事。';
+        }
+      } else {
+        if (stepIsYong) {
+          stepDesc += '事业稳固，生活安逸，可以享受子女的福气，晚年平稳。';
+        } else if (stepShen === '七杀' || stepShen === '伤官') {
+          stepDesc += '容易有意外或健康问题，宜守不宜进，注意身体。';
+        } else {
+          stepDesc += '宜守不宜进，以身体健康为重，不宜大动作投资或变动。';
+        }
+      }
+
+      // 追加极端流年事件，用分号衔接成一段话
+      var yrEvents = extremeYearEvents(ageFrom, ageTo);
+      if (yrEvents.length > 0) {
+        var sentences = yrEvents.map(function (e) { return e.sentence; });
+        stepDesc += '期间几件要事：' + sentences.join('；') + '。';
+      }
+
+      stages.push({
+        from: ageFrom, to: ageTo,
+        title: stageNames[si] || ('阶段' + (si + 1)),
+        desc: stepDesc,
+        note: stepNote
+      });
+    }
+
+    /* ---------- 组装返回 ---------- */
+    return {
+      basic: {
+        gender: isMale ? '男' : '女',
+        birthYear: birthYear,
+        shengxiao: shengxiao,
+        desc: basicDesc,
+        note: basicNote
+      },
+      appearance: {
+        build: buildDesc,
+        face: bodyTypes[dw].face,
+        height: bodyTypes[dw].height,
+        skin: bodyTypes[dw].skin,
+        note: appearNote
+      },
+      personality: {
+        desc: persoDesc,
+        note: persoNote
+      },
+      career: {
+        desc: careerDesc,
+        note: careerNote
+      },
+      spouse: {
+        looks: spouseLooksDesc,
+        distance: spouseDistDesc,
+        ageGap: ageGapDesc,
+        marriage: marriageDesc,
+        note: spouseLooksNote + '；' + spouseDistNote + '；' + spouseNote
+      },
+      family: {
+        wealth: wealthDesc,
+        parentsRelation: parentsRelationDesc,
+        fatherHealth: fatherHealthDesc,
+        motherHealth: motherHealthDesc,
+        note: familyNote
+      },
+      children: {
+        desc: childDesc,
+        count: childCount,
+        note: childNote
+      },
+      health: {
+        desc: healthDesc,
+        lifespan: lifespanDesc,
+        note: healthNote
+      },
+      stages: stages,
+      missing: [
+        '寿命长短的精确推断方法',
+        '子女具体数量的精确推断方法',
+        '判断父母是否有外遇的方法'
+      ]
+    };
+  }
+
   return {
     shiShen: shiShen, shenSha: shenSha, taiYuan: taiYuan, daYun: daYun,
     detectRelations: detectRelations, scoreChart: scoreChart,
     stageOf: stageOf, classify: classify, quYongShen: quYongShen,
     analyze: analyze, gzStr: gzStr, gzIndex: gzIndex,
-    familyWealth: familyWealth, liuNian: liuNian
+    familyWealth: familyWealth, liuNian: liuNian, charaCard: charaCard
   };
 });

@@ -160,6 +160,39 @@ table { width: 100%; border-collapse: collapse; text-align: center; }
 .liunian tr.ln-row-bad { background: #ffebee; }
 .liunian tr.ln-row-good { background: #f1f8e9; }
 
+/* 角色卡样式 */
+.chara-card { padding: 20px; }
+.chara-section { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #d4c29a; }
+.chara-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.chara-section h3 { color: #7a1f1f; margin-bottom: 12px; font-size: 18px; }
+.chara-section h4 { color: #7a1f1f; margin-bottom: 10px; font-size: 16px; }
+.chara-section p { margin: 8px 0; font-size: 15px; line-height: 1.8; text-indent: 2em; }
+.chara-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; }
+.chara-item { display: flex; }
+.chara-label { flex: 0 0 80px; color: #6d4c41; font-weight: bold; }
+.chara-val { flex: 1; }
+.chara-full { grid-column: 1 / -1; }
+.chara-stage { margin-bottom: 18px; padding-left: 12px; border-left: 3px solid #7a1f1f; background: rgba(122, 31, 31, 0.04); padding: 10px 15px; border-radius: 0 6px 6px 0; }
+.chara-stage h4 { margin-bottom: 8px; font-size: 16px; color: #7a1f1f; }
+.chara-stage p { text-indent: 2em; margin: 6px 0; }
+.chara-missing { background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px solid #ffcc80; }
+.chara-missing h4 { color: #e65100; margin-bottom: 10px; }
+.chara-missing ul { margin-left: 20px; }
+.chara-missing li { margin: 4px 0; font-size: 14px; }
+
+/* 命理备注折叠 */
+.chara-note { margin-top: 6px; }
+.chara-note summary {
+  cursor: pointer; font-size: 12px; color: #b0a090; user-select: none;
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+}
+.chara-note summary:hover { background: rgba(120,80,20,0.08); }
+.chara-note span {
+  display: block; margin-top: 4px; padding: 4px 10px;
+  font-size: 12px; color: #aaa; background: rgba(120,80,20,0.04);
+  border-radius: 4px; line-height: 1.6;
+}
+
 footer { text-align: center; font-size: 12px; color: #999; padding: 20px 16px 36px; }
 
 @media (max-width: 640px) {
