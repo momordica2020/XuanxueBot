@@ -154,6 +154,16 @@
       paras.push('神煞方面：' + ssList.join('；') + '。');
     }
 
+    /* ⑦ 家境推断 */
+    if (A.famWealth) {
+      paras.push('家境方面：' + A.famWealth.desc);
+    }
+
+    /* ⑧ 编年史摘要 */
+    if (A.chronicle) {
+      paras.push(A.chronicle);
+    }
+
     return { paragraphs: paras, summary: p1 };
   }
 

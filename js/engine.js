@@ -404,10 +404,290 @@
     };
   }
 
+  /* ============ 家境推断 ============ */
+  // 年柱=祖上宫，月柱=父母宫；财星=家境，印星=祖荫
+  function familyWealth(A) {
+    var P = A.pillars, dg = A.dayGan, ys = A.yongshen, sc = A.scores;
+    var yearGanShen = shiShen(dg, P[0].g);
+    var monthGanShen = shiShen(dg, P[1].g);
+    // 财星五行 = 我克
+    var caiWX = D.WX_KE[dg]; // 日主所克五行
+    var yinWX = (D.WX_SHENG[dg] + 0) % 5; // 生我五行
+    // 改：生我 = WX_SHENG的逆，即谁生我
+    var shengMeWX = -1;
+    for (var w = 0; w < 5; w++) { if (D.WX_SHENG[w] === dg % 5 || D.WX_SHENG[w] === D.GAN_WX[dg]) { shengMeWX = w; break; } }
+    // 更简单：日主五行X，生X的是 (X+3)%5 不对。用表反查
+    var dw = D.GAN_WX[dg];
+    shengMeWX = [4,0,1,2,3][dw]; // 谁生我：水生木→木的印=水(4)；木生火→火的印=木(0)…
+    var caiScore = sc[caiWX];
+    var yinScore = sc[shengMeWX];
+    var yearIsYong = ys.yong.indexOf(D.GAN_WX[P[0].g]) >= 0;
+    var monthIsYong = ys.yong.indexOf(D.GAN_WX[P[1].g]) >= 0;
+    var caiIsYong = ys.yong.indexOf(caiWX) >= 0;
+    var yinIsYong = ys.yong.indexOf(shengMeWX) >= 0;
+    // 年月是否被冲克
+    var yearChong = false;
+    A.relations.forEach(function (r) {
+      if (r.type === '六冲' || r.type === '天干冲') {
+        if ((r.a === 0 && r.b === 1) || (r.a === 1 && r.b === 0)) yearChong = true;
+      }
+    });
+    // 综合判定
+    var level, desc;
+    if (caiIsYong && caiScore > 120 && (yearIsYong || monthIsYong)) {
+      level = '富裕'; desc = '命局财星旺而为喜用，年月柱得力，祖业殷实，家境优渥，出身富足之门。';
+    } else if (caiIsYong && caiScore > 90) {
+      level = '小康偏上'; desc = '财星为喜且有一定力量，家境中等偏上，父母勤恳持家，衣食无忧。';
+    } else if (yinIsYong && yinScore > 120) {
+      level = '书香门第'; desc = '印星旺而为喜用，祖上多读书之人，家境虽未必大富却重教育，有文化底蕴。';
+    } else if (yearIsYong && monthIsYong && !yearChong) {
+      level = '小康'; desc = '年月柱皆为喜用，父母有能力，家境平稳，虽非大富亦无冻馁之虞。';
+    } else if (yearChong) {
+      level = '起伏不定'; desc = '年月柱相冲，家境变动较大，或早年搬迁、父母奔波，家道有起落。';
+    } else if (ys.ji.indexOf(caiWX) >= 0 && caiScore > 150) {
+      level = '财多压身'; desc = '财星过旺为忌，家境或表面富裕但内部压力大，或因财生事，长辈劳碌。';
+    } else {
+      level = '普通'; desc = '家境平凡，父母为普通人家，需靠自身努力白手起家。';
+    }
+    return { level: level, desc: desc, caiScore: caiScore, yinScore: yinScore,
+             caiIsYong: caiIsYong, yinIsYong: yinIsYong };
+  }
+
+  /* ============ 流年编年史 ============ */
+  // 从1岁（虚岁）推到maxAge岁，逐年分析
+  function liuNian(A, chart, maxAge, gender) {
+    var P = A.pillars, dg = A.dayGan, ys = A.yongshen, dy = A.dayun;
+    var yearG = chart.year.g, yearZ = chart.year.z;
+    var caiWX = D.WX_KE[D.GAN_WX[dg]];         // 财星五行
+    var guanWX = D.WX_KE[dg];                   // 官杀五行（克我者→D.WX_KE[tw]===dw → tw = ?）
+    // 克我的五行：WX_KE[x]=dw → x
+    var keMeWX = -1;
+    for (var w2 = 0; w2 < 5; w2++) { if (D.WX_KE[w2] === D.GAN_WX[dg]) { keMeWX = w2; break; } }
+    var shiShenWX = D.WX_SHENG[D.GAN_WX[dg]];  // 食伤五行（我生）
+    var biJieWX = D.GAN_WX[dg];                 // 比劫五行（同我）
+    var yinWX2 = [4,0,1,2,3][D.GAN_WX[dg]];    // 印星五行（生我）
+    var isMale = gender === 'male';
+    // 子女星：男命官杀，女命食伤
+    var childWX = isMale ? keMeWX : shiShenWX;
+    // 配偶星：男命财星，女命官杀
+    var spouseWX = isMale ? caiWX : keMeWX;
+    var years = [];
+    for (var age = 1; age <= maxAge; age++) {
+      var off = age - 1;
+      var lg = (yearG + off) % 10;
+      var lz = (yearZ + off) % 12;
+      var lw = D.GAN_WX[lg];
+      var zw = D.ZHI_WX[lz];
+      var shen = shiShen(dg, lg);
+      // 喜忌
+      var fit = ys.yong.indexOf(lw) >= 0 ? '喜'
+              : ys.ji.indexOf(lw) >= 0 ? '忌' : '平';
+      var zFit = ys.yong.indexOf(zw) >= 0 ? '喜'
+               : ys.ji.indexOf(zw) >= 0 ? '忌' : '平';
+      // 所属大运
+      var dyStep = null;
+      for (var di = 0; di < dy.list.length; di++) {
+        if (age >= dy.list[di].ageStart && age < dy.list[di].ageEnd) { dyStep = dy.list[di]; break; }
+      }
+      // 流年与原局+大运的刑冲合害
+      var events = [];
+      var allPillars = P.slice();
+      if (dyStep) allPillars.push({ g: dyStep.g, z: dyStep.z });
+      // 天干合
+      for (var pi = 0; pi < allPillars.length; pi++) {
+        var pg = allPillars[pi].g;
+        var key = [Math.min(lg, pg), Math.max(lg, pg)].join(',');
+        if (D.GAN_HE[key] !== undefined) {
+          events.push({ type: 'ganHe', desc: '流年天干' + D.GAN[lg] + '与' + D.GAN[pg] + '合' });
+        }
+      }
+      // 天干冲
+      for (var pi2 = 0; pi2 < allPillars.length; pi2++) {
+        var pg2 = allPillars[pi2].g;
+        for (var ci = 0; ci < D.GAN_CHONG.length; ci++) {
+          if ((D.GAN_CHONG[ci][0] === lg && D.GAN_CHONG[ci][1] === pg2) ||
+              (D.GAN_CHONG[ci][1] === lg && D.GAN_CHONG[ci][0] === pg2)) {
+            var posName = pi2 < 4 ? ['年','月','日','时'][pi2] : '运';
+            events.push({ type: 'ganChong', desc: '流年天干' + D.GAN[lg] + '冲' + posName + '干' + D.GAN[pg2] });
+          }
+        }
+      }
+      // 地支冲
+      for (var pi3 = 0; pi3 < allPillars.length; pi3++) {
+        var pz = allPillars[pi3].z;
+        for (var ci2 = 0; ci2 < D.ZHI_CHONG.length; ci2++) {
+          if ((D.ZHI_CHONG[ci2][0] === lz && D.ZHI_CHONG[ci2][1] === pz) ||
+              (D.ZHI_CHONG[ci2][1] === lz && D.ZHI_CHONG[ci2][0] === pz)) {
+            var posName3 = pi3 < 4 ? ['年','月','日','时'][pi3] : '运';
+            events.push({ type: 'zhiChong', desc: '流年地支' + D.ZHI[lz] + '冲' + posName3 + '支' + D.ZHI[pz] });
+          }
+        }
+      }
+      // 地支合
+      for (var pi4 = 0; pi4 < allPillars.length; pi4++) {
+        var pz2 = allPillars[pi4].z;
+        var key2 = [Math.min(lz, pz2), Math.max(lz, pz2)].join(',');
+        if (D.ZHI_LIUHE[key2] !== undefined) {
+          var posName4 = pi4 < 4 ? ['年','月','日','时'][pi4] : '运';
+          events.push({ type: 'zhiHe', desc: '流年地支' + D.ZHI[lz] + '合' + posName4 + '支' + D.ZHI[pz2] });
+        }
+      }
+      // 三合/三会检测（流年支加入）
+      var zhiArr = [P[0].z, P[1].z, P[2].z, P[3].z, lz];
+      if (dyStep) zhiArr.push(dyStep.z);
+      for (var si = 0; si < D.SANHE.length; si++) {
+        var tri = D.SANHE[si][0], hit = 0;
+        for (var sj = 0; sj < 3; sj++) { if (zhiArr.indexOf(tri[sj]) >= 0) hit++; }
+        if (hit >= 3) events.push({ type: 'sanhe', desc: '流年合' + D.WUXING[D.SANHE[si][1]] + '局' });
+      }
+      for (var si2 = 0; si2 < D.SANHUI.length; si2++) {
+        var tri2 = D.SANHUI[si2][0], hit2 = 0;
+        for (var sj2 = 0; sj2 < 3; sj2++) { if (zhiArr.indexOf(tri2[sj2]) >= 0) hit2++; }
+        if (hit2 >= 3) events.push({ type: 'sanhui', desc: '流年会' + D.WUXING[D.SANHUI[si2][1]] + '方' });
+      }
+      // 刑
+      for (var pi5 = 0; pi5 < allPillars.length; pi5++) {
+        var pz3 = allPillars[pi5].z;
+        // 三刑
+        for (var xi = 0; xi < D.XING_GROUP.length; xi++) {
+          if (D.XING_GROUP[xi].indexOf(lz) >= 0 && D.XING_GROUP[xi].indexOf(pz3) >= 0 && lz !== pz3) {
+            events.push({ type: 'xing', desc: '流年地支' + D.ZHI[lz] + '刑' + D.ZHI[pz3] });
+          }
+        }
+        // 子卯相刑
+        if (D.XING_PAIR[0][0] === lz && D.XING_PAIR[0][1] === pz3 ||
+            D.XING_PAIR[0][1] === lz && D.XING_PAIR[0][0] === pz3) {
+          events.push({ type: 'xing', desc: '流年子卯相刑' });
+        }
+      }
+      // 自刑
+      if (D.ZI_XING.indexOf(lz) >= 0) {
+        for (var pi6 = 0; pi6 < allPillars.length; pi6++) {
+          if (allPillars[pi6].z === lz) {
+            events.push({ type: 'xing', desc: '流年自刑' + D.ZHI[lz] });
+          }
+        }
+      }
+      // 害
+      for (var pi7 = 0; pi7 < allPillars.length; pi7++) {
+        var pz4 = allPillars[pi7].z;
+        for (var hi = 0; hi < D.HAI.length; hi++) {
+          if ((D.HAI[hi][0] === lz && D.HAI[hi][1] === pz4) ||
+              (D.HAI[hi][1] === lz && D.HAI[hi][0] === pz4)) {
+            events.push({ type: 'hai', desc: '流年' + D.ZHI[lz] + '害' + D.ZHI[pz4] });
+          }
+        }
+      }
+      // ===== 事件推断 =====
+      var predictions = [];
+      var shenName = shen.name;
+      var isGanYong = ys.yong.indexOf(lw) >= 0;
+      var isGanJi = ys.ji.indexOf(lw) >= 0;
+      var isZhiYong = ys.yong.indexOf(zw) >= 0;
+      var isZhiJi = ys.ji.indexOf(zw) >= 0;
+      var hasChong = events.some(function (e) { return e.type === 'zhiChong' || e.type === 'ganChong'; });
+      var hasHe = events.some(function (e) { return e.type === 'zhiHe' || e.type === 'ganHe' || e.type === 'sanhe' || e.type === 'sanhui'; });
+      var hasXing = events.some(function (e) { return e.type === 'xing'; });
+      var chongDay = false;
+      events.forEach(function (e) {
+        if (e.desc.indexOf('冲日') >= 0) chongDay = true;
+      });
+
+      // 1. 疾病灾祸
+      if (shenName === '七杀' && isGanJi) {
+        predictions.push({ cat: '灾', desc: '七杀攻身为忌，防疾病伤灾、官非口舌' });
+      }
+      if (shenName === '伤官' && isGanJi) {
+        predictions.push({ cat: '灾', desc: '伤官见官为忌，防官非是非、冲动行事' });
+      }
+      if (chongDay) {
+        predictions.push({ cat: '灾', desc: '流年冲日柱，身体不安或家宅变动' });
+      }
+      if (hasXing && (isGanJi || isZhiJi)) {
+        predictions.push({ cat: '灾', desc: '流年逢刑且为忌，防纠纷刑罚、身体损伤' });
+      }
+      // 羊刃年
+      var isYangRen = false;
+      A.shensha.forEach(function (s) {
+        if (s.name === '羊刃') isYangRen = true;
+      });
+      if (lw === D.GAN_WX[dg] && D.GAN_YY[lg] === 1 && hasChong) {
+        predictions.push({ cat: '灾', desc: '比肩羊刃逢冲，防血光破财' });
+      }
+      // 2. 财运
+      if ((shenName === '正财' || shenName === '偏财') && isGanYong) {
+        predictions.push({ cat: '财', desc: '财星流年为喜用，有进财之机，利求财投资' });
+      }
+      if ((shenName === '正财' || shenName === '偏财') && isGanJi && hasHe) {
+        predictions.push({ cat: '财', desc: '财星合身但为忌，财来而有损，防因财生灾' });
+      }
+      if (shenName === '比肩' && isGanJi && age > 15) {
+        predictions.push({ cat: '财', desc: '比劫夺财为忌，防破财耗损、投资失利' });
+      }
+      // 3. 婚姻感情
+      if (shenName === (isMale ? '正财' : '正官') && (isGanYong || age >= 20 && age <= 35)) {
+        predictions.push({ cat: '婚', desc: '配偶星流年显现，' + (isGanYong ? '姻缘将至，利婚嫁' : '有感情际遇') });
+      }
+      if (shenName === (isMale ? '偏财' : '七杀') && age >= 18 && age <= 35) {
+        predictions.push({ cat: '婚', desc: '偏缘星现，有感情波动或非正式姻缘' });
+      }
+      // 桃花
+      var yearZhiGroup = -1;
+      for (var tg = 0; tg < D.SHEN_SHA.taohua.group.length; tg++) {
+        if (D.SHEN_SHA.taohua.group[tg].indexOf(P[0].z) >= 0) { yearZhiGroup = tg; break; }
+      }
+      if (yearZhiGroup >= 0 && D.SHEN_SHA.taohua.group[yearZhiGroup].indexOf(lz) >= 0 && lz !== P[0].z) {
+        if (age >= 16 && age <= 40) predictions.push({ cat: '婚', desc: '桃花流年，异性缘旺，有感情际遇' });
+      }
+      // 4. 子女
+      if (lw === childWX && (isGanYong || (age >= 22 && age <= 40))) {
+        predictions.push({ cat: '子', desc: '子女星流年显现，' + (isGanYong ? '利生育添丁' : '有子女方面际遇') });
+      }
+      // 5. 学业事业
+      if ((shenName === '正印' || shenName === '偏印') && isGanYong) {
+        if (age >= 6 && age <= 25) predictions.push({ cat: '学', desc: '印星为喜，利读书考试、学业进步' });
+        else predictions.push({ cat: '业', desc: '印星为喜，利置业、学习进修、长辈助力' });
+      }
+      if ((shenName === '正官' || shenName === '七杀') && isGanYong && age > 20) {
+        predictions.push({ cat: '业', desc: '官星为喜，利升职掌权、事业拓展' });
+      }
+      // 文昌
+      if (D.SHEN_SHA.wenchang.map[dg] === lz && age >= 6 && age <= 25) {
+        predictions.push({ cat: '学', desc: '文昌星照命，利科考学业' });
+      }
+      // 6. 贵人喜事
+      var tianyi = D.SHEN_SHA.tianyi.map[dg] || [];
+      if (tianyi.indexOf(lz) >= 0) {
+        predictions.push({ cat: '贵', desc: '天乙贵人照命，逢凶化吉，有贵人相助' });
+      }
+      if (isGanYong && isZhiYong && !hasChong) {
+        predictions.push({ cat: '吉', desc: '干支皆为喜用，流年顺利，万事如意' });
+      }
+      if (isGanJi && isZhiJi && hasChong) {
+        predictions.push({ cat: '凶', desc: '干支皆忌且逢冲，此年多艰，宜守不宜进' });
+      }
+      // 大运喜忌叠加
+      var dyFit = null;
+      if (dyStep) {
+        var dyw = D.GAN_WX[dyStep.g];
+        dyFit = ys.yong.indexOf(dyw) >= 0 ? '喜' : ys.ji.indexOf(dyw) >= 0 ? '忌' : '平';
+      }
+      years.push({
+        age: age, g: lg, z: lz, ganzhi: D.GAN[lg] + D.ZHI[lz],
+        shen: shenName, fit: fit, zFit: zFit,
+        dyGz: dyStep ? D.GAN[dyStep.g] + D.ZHI[dyStep.z] : null,
+        dyFit: dyFit,
+        events: events, predictions: predictions
+      });
+    }
+    return years;
+  }
+
   return {
     shiShen: shiShen, shenSha: shenSha, taiYuan: taiYuan, daYun: daYun,
     detectRelations: detectRelations, scoreChart: scoreChart,
     stageOf: stageOf, classify: classify, quYongShen: quYongShen,
-    analyze: analyze, gzStr: gzStr, gzIndex: gzIndex
+    analyze: analyze, gzStr: gzStr, gzIndex: gzIndex,
+    familyWealth: familyWealth, liuNian: liuNian
   };
 });

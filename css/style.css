@@ -121,6 +121,45 @@ table { width: 100%; border-collapse: collapse; text-align: center; }
 /* 短文 */
 .report p { margin: 12px 0; text-indent: 2em; font-size: 15px; text-align: justify; }
 
+/* 家境 */
+.fam-box { padding: 8px 0; }
+.fam-level { display: inline-block; background: #7a1f1f; color: #fff; font-size: 20px; font-weight: bold; border-radius: 8px; padding: 6px 20px; margin-bottom: 10px; }
+.fam-box p { font-size: 15px; line-height: 1.8; color: #5d4037; }
+
+/* 流年编年史 */
+.ln-box { overflow-x: auto; }
+.liunian { width: 100%; border-collapse: collapse; font-size: 13px; }
+.liunian th { background: #ede0c0; border: 1px solid #d4c29a; padding: 6px 4px; white-space: nowrap; }
+.liunian td { border: 1px solid #d4c29a; padding: 5px 4px; vertical-align: top; }
+.liunian .gz { font-size: 16px; font-weight: bold; white-space: nowrap; }
+.liunian td.yong { color: #00838f; font-weight: bold; }
+.liunian td.ji { color: #c62828; font-weight: bold; }
+.liunian .ln-pred { max-width: 360px; }
+.liunian .ln-cat { display: inline-block; margin: 1px 0; }
+.liunian .ln-灾 { color: #c62828; }
+.liunian .ln-财 { color: #e65100; }
+.liunian .ln-婚 { color: #d81b60; }
+.liunian .ln-子 { color: #00838f; }
+.liunian .ln-学 { color: #1565c0; }
+.liunian .ln-业 { color: #2e7d32; }
+.liunian .ln-贵 { color: #f57f17; }
+.liunian .ln-吉 { color: #00838f; }
+.liunian .ln-凶 { color: #b71c1c; }
+.liunian .ln-evt { font-size: 12px; color: #8d6e63; }
+
+/* 编年史行背景色 */
+.liunian tr.ln-row-danger { background: #3d1a1a; color: #ffcdd2; }
+.liunian tr.ln-row-danger td { border-color: #5d2a2a; }
+.liunian tr.ln-row-danger .ln-evt { color: #ef9a9a; }
+.liunian tr.ln-row-gold { background: linear-gradient(90deg, #fff8e1, #ffe082); }
+.liunian tr.ln-row-wealth { background: #fff3e0; }
+.liunian tr.ln-row-career { background: #e8f5e9; }
+.liunian tr.ln-row-romance { background: #fce4ec; }
+.liunian tr.ln-row-study { background: #e3f2fd; }
+.liunian tr.ln-row-lucky { background: #e0f7fa; }
+.liunian tr.ln-row-bad { background: #ffebee; }
+.liunian tr.ln-row-good { background: #f1f8e9; }
+
 footer { text-align: center; font-size: 12px; color: #999; padding: 20px 16px 36px; }
 
 @media (max-width: 640px) {
